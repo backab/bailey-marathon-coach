@@ -1,0 +1,159 @@
+<div class="app-container">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <aside class="sidebar">
+    <div class="profile-section">
+      <div class="avatar">🏃‍♂️</div>
+      <div class="user-info">
+        <h3>Sub-3 Chaser</h3>
+        <p>Tacoma HM / Jack & Jill</p>
+      </div>
+    </div>
+    <nav class="nav-menu">
+      <a href="#" class="active" id="tab-dashboard" onclick="switchTab(event, 'dashboard-view')"><i class="icon">📊</i> Dashboard</a>
+      <a href="#" id="tab-calendar" onclick="switchTab(event, 'training-view')"><i class="icon">📅</i> Calendar</a>
+      <a href="#" id="tab-pace" onclick="switchTab(event, 'pace-view')"><i class="icon">⏱️</i> Pace Calculator</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="header">
+      <h2>Bailey Marathon Coach</h2>
+      <button onclick="syncStrava()" class="strava-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+        Bulk Sync Strava Runs
+      </button>
+    </div>
+
+    <div id="dashboard-view" class="tab-content" style="display: block;">
+      
+      <div class="chart-container" style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid #E2E8F0;">
+        <h3 style="color: #0D2B5A; margin-bottom: 15px; font-size: 14px;">📈 Weekly Volume Build</h3>
+        <div style="position: relative; height: 220px; width: 100%;">
+          <canvas id="mileageChart"></canvas>
+        </div>
+      </div>
+
+      <h3 style="color: #0D2B5A; margin-bottom: 20px;">Upcoming Workouts</h3>
+      <div id="upcoming-workouts" class="workout-list"></div>
+    </div>
+
+    <div id="training-view" class="tab-content" style="display: none;">
+      <div class="calendar-header">
+        <button class="cal-btn" onclick="changeMonth(-1)">&#9664;</button>
+        <h3 id="calendar-month-year" style="color: #0D2B5A; margin: 0 20px;">March 2026</h3>
+        <button class="cal-btn" onclick="changeMonth(1)">&#9654;</button>
+      </div>
+      <div class="calendar-days-header">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </div>
+
+    <div id="pace-view" class="tab-content" style="display: none;">
+      <h3 style="color: #0D2B5A; margin-bottom: 20px;">FIRST Pace Calculator</h3>
+      <div class="calculator-box">
+        <p style="margin-bottom: 15px; color: #64748B; font-size: 14px;">Select a recent race distance and time. The FIRST method bases all training paces off a 10K equivalent.</p>
+        <div class="inputs">
+          <select id="raceDist" class="form-input">
+            <option value="1">1 Mile</option>
+            <option value="3.1">5K</option>
+            <option value="6.21" selected>10K</option>
+            <option value="10">10 Mile</option>
+            <option value="13.1">Half Marathon</option>
+            <option value="26.2">Marathon</option>
+          </select>
+          <input type="number" id="raceMin" class="form-input" placeholder="Mins" value="38"> : 
+          <input type="number" id="raceSec" class="form-input" placeholder="Secs" value="00">
+          <button onclick="calculatePaces()" class="calc-btn">Calculate My Paces</button>
+        </div>
+        <div class="pace-results">
+          <div class="result-row"><strong>Long Run Pace:</strong> <span id="calcLong">--:--</span></div>
+          <div class="result-row"><strong>Tempo Pace (Short to Long):</strong> <span id="calcTempo">--:--</span></div>
+          <div class="result-row"><strong>Speed Intervals:</strong> <span id="calcSpeed">--:--</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="right-panel">
+    <div class="widget-box" style="background: #FFFBEB; border-color: #F59E0B;">
+      <h3>🏅 Race Countdown</h3>
+      <div class="race-row"><strong>Tacoma HM:</strong> <span id="tacoma-countdown">-- Days</span></div>
+      <div class="race-row"><strong>Jack & Jill:</strong> <span id="jj-countdown">-- Days</span></div>
+      <div class="race-row" style="margin-top: 10px; border-top: 1px solid #FDE68A; padding-top: 5px;">
+        <strong>Est. Marathon Finish:</strong> <span id="marathon-predictor" style="color: #D81B60;">2:59:30</span>
+      </div>
+    </div>
+
+    <div class="widget-box">
+      <h3>👟 Adizero SL Mileage</h3>
+      <span class="percentage" id="shoe-text">0 / 350 mi</span>
+      <div class="progress-bar"><div class="progress-fill" id="shoe-bar" style="background: #26A69A;"></div></div>
+    </div>
+
+    <div class="widget-box">
+      <h3>⚖️ Training Polarization</h3>
+      <p class="input-desc">Target: 80% Easy / 20% Hard</p>
+      <div class="split-bar">
+        <div id="easy-bar" class="split-easy"></div>
+        <div id="hard-bar" class="split-hard"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 5px; font-weight: bold;">
+        <span style="color:#26A69A;" id="easy-text">Easy: --%</span>
+        <span style="color:#D81B60;" id="hard-text">Hard: --%</span>
+      </div>
+    </div>
+
+    <div class="widget-box" style="background: #F8FAFC;">
+      <h3>Sunday Check-In</h3>
+      <label>Joint/Niggle Check (1-10):</label>
+      <input type="number" id="jointScore" class="form-input" min="1" max="10" value="1">
+      <label>Easy Run RPE (1-10):</label>
+      <input type="number" id="rpeScore" class="form-input" min="1" max="10" value="3">
+      <button onclick="generatePlan()" class="action-btn">Generate AI Adjustment</button>
+      <div id="coachFeedback" class="feedback-box"></div>
+    </div>
+  </aside>
+
+  <div id="workoutModal" class="modal">
+    <div class="modal-content">
+      <h3 id="modalTitle" style="color:#0D2B5A; margin-bottom:5px;">Edit Workout</h3>
+      <p id="modalPlanned" style="margin-bottom: 15px; color:#26A69A; font-size:14px; font-weight: bold;"></p>
+      
+      <div id="smart-weather-container" style="margin-bottom: 15px; background: #E0F2FE; padding: 12px; border-radius: 8px; border: 1px solid #BAE6FD; display: none;">
+         <button onclick="findBestTime()" style="background: #0284C7; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%;">⛅ Find Best Time to Run</button>
+         <div id="best-time-result" style="font-size: 12px; color: #0D2B5A; margin-top: 8px; font-weight: 600; text-align: center;"></div>
+      </div>
+
+      <p id="modalDescription" style="margin-bottom: 20px; color:#334155; font-size:13px; line-height: 1.5; background: #F8FAFC; padding: 12px; border-radius: 8px; border: 1px solid #E2E8F0;"></p>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label>Actual Miles:</label>
+          <input type="number" id="actualMiles" class="form-input" step="0.1" placeholder="6.2">
+        </div>
+        <div>
+          <label>Avg Pace (MM:SS):</label>
+          <input type="text" id="actualPace" class="form-input" placeholder="7:15">
+        </div>
+        <div>
+          <label>Elevation Gain (ft):</label>
+          <input type="number" id="actualElev" class="form-input" placeholder="300">
+        </div>
+        <div>
+          <label>GAP Pace:</label>
+          <input type="text" id="actualGap" class="form-input" placeholder="7:05" disabled style="background:#E2E8F0;">
+        </div>
+      </div>
+      
+      <label>Workout Notes (Diary):</label>
+      <textarea id="actualNotes" rows="3" placeholder="How did your joints feel? Weather? Nutrition?"></textarea>
+      
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button onclick="saveWorkout()" class="save-btn">Save</button>
+        <button onclick="closeModal()" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
