@@ -179,7 +179,12 @@
       
       <label for="actualNotes">Workout Notes (Diary):</label>
       <textarea id="actualNotes" rows="3" placeholder="How did your joints feel? Weather? Nutrition?"></textarea>
-      
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button onclick="saveWorkout()" class="save-btn">Save</button>
+        <button onclick="closeModal()" class="cancel-btn">Cancel</button>
+        
+        <button onclick="goToDeepDive()" class="action-btn" style="background: #8B5CF6; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">🔍 Deep Dive This Run</button>
+      </div>
       <div style="margin-top: 20px; display: flex; gap: 10px;">
         <button onclick="saveWorkout()" class="save-btn">Save</button>
         <button onclick="closeModal()" class="cancel-btn">Cancel</button>
