@@ -579,35 +579,91 @@ function renderMap(containerId, polylineString) {
 }
 
 // Button Logic: Suggest a Route
+// Upgraded: Smart Route Matching
 function suggestLocalRoute() {
-  const randomRoute = routeRepository[Math.floor(Math.random() * routeRepository.length)];
+  // 1. Extract the planned distance from the text in the modal
+  const plannedText = document.getElementById('modalPlanned').innerText;
+  
+  // This clever regex pulls just the numbers out of the string (e.g., "Planned: 5.0 miles" -> 5.0)
+  const distanceMatch = plannedText.match(/[\d\.]+/);
+  const targetDistance = distanceMatch ? parseFloat(distanceMatch[0]) : 0;
+
+  let bestRoute = routeRepository[0];
+
+  // 2. Find the route in the repository with the closest matching distance
+  if (targetDistance > 0) {
+    let smallestDiff = Infinity;
+    routeRepository.forEach(route => {
+      const routeDist = parseFloat(route.distance);
+      const diff = Math.abs(routeDist - targetDistance);
+      
+      // If this route's distance is closer to our target, make it the new best route
+      if (diff < smallestDiff) {
+        smallestDiff = diff;
+        bestRoute = route;
+      }
+    });
+  } else {
+    // Fallback: Pick a random route if no planned distance exists
+    bestRoute = routeRepository[Math.floor(Math.random() * routeRepository.length)];
+  }
+
+  // 3. Render the matched route
   document.getElementById('suggested-route-info').innerHTML = `
-    Suggested: ${randomRoute.name} (${randomRoute.distance}) <br>
-    <span style="font-weight:normal; color:#64748B;">Type: ${randomRoute.type} | Tags: ${randomRoute.tags.join(', ')}</span>
+    Suggested: ${bestRoute.name} (${bestRoute.distance}) <br>
+    <span style="font-weight:normal; color:#64748B;">Type: ${bestRoute.type} | Tags: ${bestRoute.tags.join(', ')}</span>
   `;
   
-  // We need a tiny timeout to let the modal expand before rendering the map, otherwise it renders gray
   setTimeout(() => {
-    renderMap('modal-map', randomRoute.polyline);
+    renderMap('modal-map', bestRoute.polyline);
   }, 100);
 }
 
 // Logic: Last Run Deep Dive Tab
-function renderLastRunSummary() {
-  // Find the most recent run that has actual data
-  const completedRuns = workouts.filter(w => w.actualMiles);
-  if (completedRuns.length === 0) return;
+// Navigates from the modal directly to the specific day's deep dive
+function goToDeepDive() {
+  closeModal(); 
+  switchTab(new Event('click'), 'lastrun-view'); // Jump to the tab
   
-  // Sort by date descending
-  completedRuns.sort((a, b) => new Date(b.date) - new Date(a.date));
-  const lastRun = completedRuns[0];
+  // NOTE: If your global variable for the active calendar day is named differently, change it here:
+  renderDeepDive(currentEditDate); 
+}
 
+// Upgraded Deep Dive Logic (Accepts specific dates)
+function renderDeepDive(targetDate = null) {
+  let targetWorkout = null;
+
+  if (targetDate) {
+    // If a date was clicked from the calendar, find that specific run
+    targetWorkout = workouts.find(w => w.date === targetDate);
+  } else {
+    // Fallback: If clicking the sidebar tab directly, just show the most recent completed run
+    const completedRuns = workouts.filter(w => w.actualMiles);
+    if (completedRuns.length > 0) {
+      completedRuns.sort((a, b) => new Date(b.date) - new Date(a.date));
+      targetWorkout = completedRuns[0];
+    }
+  }
+
+  // Handle empty days
+  if (!targetWorkout || !targetWorkout.actualMiles) {
+    document.getElementById('last-run-stats').innerHTML = `<p style="color:#64748B; font-style: italic;">No GPS data recorded for this selection yet.</p>`;
+    document.getElementById('last-run-map').style.display = 'none';
+    return;
+  }
+
+  // Render the specific day's data
+  document.getElementById('last-run-map').style.display = 'block';
   const statsHtml = `
-    <div class="widget-box" style="flex:1;"><h3>Distance</h3><p style="font-size:24px; color:#D81B60; font-weight:bold;">${lastRun.actualMiles} mi</p></div>
-    <div class="widget-box" style="flex:1;"><h3>Avg Pace</h3><p style="font-size:24px; color:#26A69A; font-weight:bold;">${lastRun.actualPace} /mi</p></div>
-    <div class="widget-box" style="flex:1;"><h3>Elevation</h3><p style="font-size:24px; color:#F59E0B; font-weight:bold;">${lastRun.actualElev} ft</p></div>
+    <div class="widget-box" style="flex:1;"><h3>Distance</h3><p style="font-size:24px; color:#D81B60; font-weight:bold;">${targetWorkout.actualMiles} mi</p></div>
+    <div class="widget-box" style="flex:1;"><h3>Avg Pace</h3><p style="font-size:24px; color:#26A69A; font-weight:bold;">${targetWorkout.actualPace} /mi</p></div>
+    <div class="widget-box" style="flex:1;"><h3>Elevation</h3><p style="font-size:24px; color:#F59E0B; font-weight:bold;">${targetWorkout.actualElev} ft</p></div>
   `;
   document.getElementById('last-run-stats').innerHTML = statsHtml;
+
+  // Use the actual Strava polyline for that day if it exists, otherwise show a generic route
+  renderMap('last-run-map', targetWorkout.mapPolyline || routeRepository[0].polyline); 
+}
 
   // If we have the Strava polyline saved in the notes (we need to update syncStrava to grab this later), render it.
   // For now, if we don't have it, we just show a generic view of Lakewood.
