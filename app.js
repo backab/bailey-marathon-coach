@@ -436,12 +436,35 @@ function saveWorkout() {
   renderChart(); // Re-render the graph when data is saved!
 }
 
+// --- NAVIGATION LOGIC ---
 function switchTab(event, tabId) {
-  event.preventDefault();
-  document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+  // Prevent the default link jump behavior
+  if (event) event.preventDefault();
+
+  // 1. Hide all the tab content containers
+  const tabs = document.querySelectorAll('.tab-content');
+  tabs.forEach(tab => tab.style.display = 'none');
+
+  // 2. Remove the 'active' highlight from all sidebar links
+  const navLinks = document.querySelectorAll('.nav-menu a');
+  navLinks.forEach(link => link.classList.remove('active'));
+
+  // 3. Show the newly selected tab
   document.getElementById(tabId).style.display = 'block';
-  document.querySelectorAll('.nav-menu a').forEach(link => link.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  
+  // 4. Highlight the newly clicked sidebar link
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  } else {
+    // Fallback just in case we trigger this via code instead of a click
+    const activeLink = document.querySelector(`.nav-menu a[onclick*="${tabId}"]`);
+    if (activeLink) activeLink.classList.add('active');
+  }
+
+  // 👇 THE FINAL CLEANUP: Auto-load the most recent run 👇
+  if (tabId === 'lastrun-view') {
+    renderDeepDive(); // Calling it with nothing inside defaults to the newest run
+  }
 }
 
 function calculatePaces() {
