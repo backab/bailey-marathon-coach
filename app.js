@@ -504,16 +504,13 @@ function generatePlan() {
   else feedbackBox.innerHTML = `✅ <b>Green light!</b> Plan locked.`;
 }
 
+// --- CLOUDFLARE BACKEND STRAVA SYNC ---
 async function syncStrava() {
-  const stravaAccessToken = '4b96e9a0f9ba7f33e07bba65050cfb847c587048'; // YOUR TOKEN IS INJECTED HERE
-  
-  if (stravaAccessToken === 'YOUR_STRAVA_ACCESS_TOKEN_HERE') {
-    alert("Paste your Strava Access Token into the JS code first!");
-    return;
-  }
   try {
-    const response = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', { headers: { 'Authorization': `Bearer ${stravaAccessToken}` } });
-    if (!response.ok) throw new Error("Strava Token likely expired.");
+    // We no longer talk to Strava directly. We ask your new Cloudflare backend to do it!
+    const response = await fetch('/api/strava'); 
+    
+    if (!response.ok) throw new Error("Cloudflare backend failed to fetch runs.");
     
     const data = await response.json();
     let syncedCount = 0;
@@ -555,14 +552,14 @@ async function syncStrava() {
     });
 
     localStorage.setItem('baileyCoachData_v2', JSON.stringify(workouts)); 
-    alert(`✅ Successfully synced ${syncedCount} new runs!`);
+    alert(`✅ Successfully synced ${syncedCount} new runs via Cloudflare!`);
     updateWidgets();
     renderDashboard();
     renderCalendar();
-    renderChart(); // Redraw the graph after pulling Strava data!
+    renderChart(); 
 
   } catch (error) {
     console.error(error);
-    alert("Strava Sync Failed. Check the console or your Access Token.");
+    alert("Strava Sync Failed. Check the console.");
   }
 }
