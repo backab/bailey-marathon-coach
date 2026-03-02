@@ -688,10 +688,6 @@ function renderDeepDive(targetDate = null) {
   renderMap('last-run-map', targetWorkout.mapPolyline || routeRepository[0].polyline); 
 }
 
-  // If we have the Strava polyline saved in the notes (we need to update syncStrava to grab this later), render it.
-  // For now, if we don't have it, we just show a generic view of Lakewood.
-  renderMap('last-run-map', lastRun.mapPolyline || routeRepository[0].polyline); 
-}
 
 // Logic: Render the 100-Route Repository Tab
 function renderSuggestedRoutes() {
