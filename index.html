@@ -6,6 +6,8 @@
   <title>Bailey Marathon Coach</title>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
   <link rel="stylesheet" href="style.css">
 </head>
@@ -24,6 +26,8 @@
       <a href="#" class="active" id="tab-dashboard" onclick="switchTab(event, 'dashboard-view')"><i class="icon">📊</i> Dashboard</a>
       <a href="#" id="tab-calendar" onclick="switchTab(event, 'training-view')"><i class="icon">📅</i> Calendar</a>
       <a href="#" id="tab-pace" onclick="switchTab(event, 'pace-view')"><i class="icon">⏱️</i> Pace Calculator</a>
+      <a href="#" id="tab-routes" onclick="switchTab(event, 'routes-view')"><i class="icon">🗺️</i> Suggested Routes</a>
+      <a href="#" id="tab-lastrun" onclick="switchTab(event, 'lastrun-view')"><i class="icon">🏁</i> Last Run Deep Dive</a>
     </nav>
   </aside>
 
@@ -84,6 +88,17 @@
         </div>
       </div>
     </div>
+    <div id="routes-view" class="tab-content" style="display: none;">
+      <h3 style="color: #0D2B5A; margin-bottom: 20px;">Lakewood / Tacoma Route Repository</h3>
+      <div id="route-repository-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        </div>
+    </div>
+
+    <div id="lastrun-view" class="tab-content" style="display: none;">
+      <h3 style="color: #0D2B5A; margin-bottom: 20px;">Latest Run Summary</h3>
+      <div id="last-run-stats" style="display: flex; gap: 20px; margin-bottom: 20px;"></div>
+      <div id="last-run-map" style="height: 400px; width: 100%; border-radius: 12px; border: 1px solid #E2E8F0; z-index: 1;"></div>
+    </div>
   </main>
 
   <aside class="right-panel">
@@ -135,7 +150,12 @@
          <button onclick="findBestTime()" style="background: #0284C7; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%;">⛅ Find Best Time to Run</button>
          <div id="best-time-result" style="font-size: 12px; color: #0D2B5A; margin-top: 8px; font-weight: 600; text-align: center;"></div>
       </div>
-
+<div style="margin-bottom: 15px; display: flex; gap: 10px;">
+         <button onclick="suggestLocalRoute()" style="background: #10B981; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%;">🗺️ Suggest Local Route</button>
+      </div>
+      <div id="suggested-route-info" style="font-size: 13px; color: #0D2B5A; font-weight: bold; margin-bottom: 10px;"></div>
+      
+      <div id="modal-map" style="height: 200px; width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; z-index: 1;"></div>
       <p id="modalDescription" style="margin-bottom: 20px; color:#334155; font-size:13px; line-height: 1.5; background: #F8FAFC; padding: 12px; border-radius: 8px; border: 1px solid #E2E8F0;"></p>
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
