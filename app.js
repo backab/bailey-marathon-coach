@@ -437,26 +437,21 @@ function saveWorkout() {
 }
 
 // --- NAVIGATION LOGIC ---
+// 1. UPGRADED SWITCH TAB
 function switchTab(event, tabId) {
-  // Prevent the default link jump behavior
   if (event) event.preventDefault();
 
-  // 1. Hide all the tab content containers
   const tabs = document.querySelectorAll('.tab-content');
   tabs.forEach(tab => tab.style.display = 'none');
 
-  // 2. Remove the 'active' highlight from all sidebar links
   const navLinks = document.querySelectorAll('.nav-menu a');
   navLinks.forEach(link => link.classList.remove('active'));
 
-  // 3. Show the newly selected tab
   document.getElementById(tabId).style.display = 'block';
-  
-  // 4. Highlight the newly clicked sidebar link
+
   if (event && event.currentTarget) {
     event.currentTarget.classList.add('active');
   } else {
-    // Fallback just in case we trigger this via code instead of a click
     const activeLink = document.querySelector(`.nav-menu a[onclick*="${tabId}"]`);
     if (activeLink) activeLink.classList.add('active');
   }
@@ -645,11 +640,24 @@ function suggestLocalRoute() {
 // Logic: Last Run Deep Dive Tab
 // Navigates from the modal directly to the specific day's deep dive
 function goToDeepDive() {
+  // Create a custom flag so switchTab knows we are coming from the modal
+  const customEvent = new Event('click');
+  customEvent.isFromModal = true;
+
   closeModal(); 
-  switchTab(new Event('click'), 'lastrun-view'); // Jump to the tab
+  switchTab(customEvent, 'lastrun-view'); 
   
-  // NOTE: If your global variable for the active calendar day is named differently, change it here:
-  renderDeepDive(currentEditDate); 
+  // THE DATE CATCHER: Safely grabs the exact day you clicked on
+  if (typeof currentEditDate !== 'undefined') {
+    renderDeepDive(currentEditDate);
+  } else if (typeof selectedDate !== 'undefined') {
+    renderDeepDive(selectedDate);
+  } else if (typeof activeDate !== 'undefined') {
+    renderDeepDive(activeDate);
+  } else {
+    console.error("Could not find the specific date variable! Rendering default.");
+    renderDeepDive();
+  }
 }
 
 // Upgraded Deep Dive Logic (Accepts specific dates)
