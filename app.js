@@ -505,14 +505,25 @@ function generatePlan() {
 }
 
 // --- CLOUDFLARE BACKEND STRAVA SYNC ---
+// --- CLOUDFLARE BACKEND STRAVA SYNC ---
 async function syncStrava() {
   try {
-    // We no longer talk to Strava directly. We ask your new Cloudflare backend to do it!
     const response = await fetch('/api/strava'); 
     
     if (!response.ok) throw new Error("Cloudflare backend failed to fetch runs.");
     
     const data = await response.json();
+    
+    // THE MAGIC DEBUGGER: Print exactly what Strava handed back
+    console.log("Strava API Response:", data); 
+
+    // Safety Check: If data is NOT an array (a list of runs), stop and alert the user.
+    if (!Array.isArray(data)) {
+        console.error("Strava Error Details:", data);
+        alert("Strava returned an error! Check the console for details.");
+        return; 
+    }
+    
     let syncedCount = 0;
 
     data.forEach(activity => {
