@@ -428,7 +428,7 @@ function saveWorkout() {
   w.actualGap = document.getElementById('actualGap').value;
   w.notes = document.getElementById('actualNotes').value;
   
-  localStorage.setItem('baileyCoachData_v2', JSON.stringify(workouts)); 
+  saveToCloud();
   closeModal(); 
   updateWidgets();
   renderDashboard(); 
@@ -639,24 +639,23 @@ function suggestLocalRoute() {
 
 // Logic: Last Run Deep Dive Tab
 // Navigates from the modal directly to the specific day's deep dive
+// Navigates from the modal directly to the specific day's deep dive
 function goToDeepDive() {
   // Create a custom flag so switchTab knows we are coming from the modal
   const customEvent = new Event('click');
   customEvent.isFromModal = true;
 
+  // Grab the exact workout using the secret ID we just found!
+  const currentWorkout = workouts.find(wo => wo.id === selectedWorkoutId);
+
   closeModal(); 
   switchTab(customEvent, 'lastrun-view'); 
   
-  // THE DATE CATCHER: Safely grabs the exact day you clicked on
-  if (typeof currentEditDate !== 'undefined') {
-    renderDeepDive(currentEditDate);
-  } else if (typeof selectedDate !== 'undefined') {
-    renderDeepDive(selectedDate);
-  } else if (typeof activeDate !== 'undefined') {
-    renderDeepDive(activeDate);
+  // Pass the exact date to the deep dive renderer
+  if (currentWorkout && currentWorkout.date) {
+    renderDeepDive(currentWorkout.date);
   } else {
-    console.error("Could not find the specific date variable! Rendering default.");
-    renderDeepDive();
+    renderDeepDive(); // Fallback just in case
   }
 }
 
