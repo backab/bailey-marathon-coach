@@ -683,6 +683,7 @@ async function syncStrava() {
           workoutToUpdate.actualGap = `${gM}:${gS}`;
           
           workoutToUpdate.notes = `Strava Sync: ${activity.name}`;
+          workoutToUpdate.mapPolyline = activity.map.summary_polyline;
           syncedCount++;
         }
       }
