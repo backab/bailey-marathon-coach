@@ -1,13 +1,10 @@
 // File: functions/api/strava.js
-
 export async function onRequestGet(context) {
-  // 1. Grab your secret keys from Cloudflare's secure environment
   const clientId = context.env.STRAVA_CLIENT_ID;
   const clientSecret = context.env.STRAVA_CLIENT_SECRET;
   const refreshToken = context.env.STRAVA_REFRESH_TOKEN;
 
   try {
-    // 2. Ask Strava for a brand new Access Token using your Refresh Token
     const tokenResponse = await fetch("https://www.strava.com/api/v3/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -20,21 +17,38 @@ export async function onRequestGet(context) {
     });
 
     const tokenData = await tokenResponse.json();
+
+    // 🚨 DIAGNOSTIC CHECK: Did the token exchange fail?
+    if (!tokenResponse.ok || !tokenData.access_token) {
+        // Send the exact reason back to your frontend console!
+        return new Response(JSON.stringify({ 
+            message: "Backend Token Exchange Failed!", 
+            strava_complaint: tokenData,
+            // This tells us if Cloudflare is actually seeing your variables
+            debug_variables_exist: {
+                has_clientId: !!clientId,
+                has_clientSecret: !!clientSecret,
+                has_refreshToken: !!refreshToken
+            }
+        }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+
     const freshAccessToken = tokenData.access_token;
 
-    // 3. Use the fresh token to fetch your last 30 runs!
     const activitiesResponse = await fetch("https://www.strava.com/api/v3/athlete/activities?per_page=30", {
       headers: { "Authorization": `Bearer ${freshAccessToken}` }
     });
 
     const activities = await activitiesResponse.json();
 
-    // 4. Send the runs back to your frontend dashboard
     return new Response(JSON.stringify(activities), {
       headers: { "Content-Type": "application/json" }
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Strava Sync Failed" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Server Crashed", details: error.message }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 }
