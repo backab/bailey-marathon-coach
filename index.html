@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bailey Marathon Coach</title>
   
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app-container">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<div class="app-container">
   <aside class="sidebar">
     <div class="profile-section">
       <div class="avatar">🏃‍♂️</div>
@@ -36,7 +37,6 @@
     </div>
 
     <div id="dashboard-view" class="tab-content" style="display: block;">
-      
       <div class="chart-container" style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid #E2E8F0;">
         <h3 style="color: #0D2B5A; margin-bottom: 15px; font-size: 14px;">📈 Weekly Volume Build</h3>
         <div style="position: relative; height: 220px; width: 100%;">
@@ -117,9 +117,9 @@
 
     <div class="widget-box" style="background: #F8FAFC;">
       <h3>Sunday Check-In</h3>
-      <label>Joint/Niggle Check (1-10):</label>
+      <label for="jointScore">Joint/Niggle Check (1-10):</label>
       <input type="number" id="jointScore" class="form-input" min="1" max="10" value="1">
-      <label>Easy Run RPE (1-10):</label>
+      <label for="rpeScore">Easy Run RPE (1-10):</label>
       <input type="number" id="rpeScore" class="form-input" min="1" max="10" value="3">
       <button onclick="generatePlan()" class="action-btn">Generate AI Adjustment</button>
       <div id="coachFeedback" class="feedback-box"></div>
@@ -140,24 +140,24 @@
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
-          <label>Actual Miles:</label>
+          <label for="actualMiles">Actual Miles:</label>
           <input type="number" id="actualMiles" class="form-input" step="0.1" placeholder="6.2">
         </div>
         <div>
-          <label>Avg Pace (MM:SS):</label>
+          <label for="actualPace">Avg Pace (MM:SS):</label>
           <input type="text" id="actualPace" class="form-input" placeholder="7:15">
         </div>
         <div>
-          <label>Elevation Gain (ft):</label>
+          <label for="actualElev">Elevation Gain (ft):</label>
           <input type="number" id="actualElev" class="form-input" placeholder="300">
         </div>
         <div>
-          <label>GAP Pace:</label>
+          <label for="actualGap">GAP Pace:</label>
           <input type="text" id="actualGap" class="form-input" placeholder="7:05" disabled style="background:#E2E8F0;">
         </div>
       </div>
       
-      <label>Workout Notes (Diary):</label>
+      <label for="actualNotes">Workout Notes (Diary):</label>
       <textarea id="actualNotes" rows="3" placeholder="How did your joints feel? Weather? Nutrition?"></textarea>
       
       <div style="margin-top: 20px; display: flex; gap: 10px;">
@@ -167,6 +167,8 @@
     </div>
   </div>
 </div>
-  <script src="app.js"></script>
+
+<script src="app.js"></script>
+
 </body>
 </html>
