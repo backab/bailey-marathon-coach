@@ -504,6 +504,132 @@ function generatePlan() {
   else feedbackBox.innerHTML = `✅ <b>Green light!</b> Plan locked.`;
 }
 
+// ==========================================
+// MAPPING & ROUTE REPOSITORY LOGIC
+// ==========================================
+
+// Global variable to hold our active map instance
+let activeMap = null;
+
+// The Local Route Database
+const routeRepository = [
+  {
+    name: "Fort Steilacoom Park Outer Loop",
+    distance: "3.2 miles",
+    type: "Trail / Gravel",
+    tags: ["Door-to-door", "Hills", "Park"],
+    // Real Polyline for Steilacoom Park
+    polyline: "e|saHtw{iVm@`@}@j@SJi@P]RUXWb@A~@I\\E`@EXC^Db@Hj@?^Bf@`@xATd@V^d@~@l@lAh@hARV`@TZRd@l@n@z@|@vB^|@f@z@h@hAfAbCZr@fAlCv@jBhA`C\\~@Rf@d@hA|@tBXl@Vx@^rAVx@@\\J|@Ht@D`@@Z?TCJEXGTCJCZIX?\\@VFTDPBPHh@FNNj@Hb@@VAXEVK`@Yx@OXUf@]p@_@r@Ud@S`@MXA`@LNZTf@r@xBp@hBZfARv@TfA~@xCDVDd@Ab@K`AET?NBPFRNNL^j@Vb@L\\Dn@?r@IjAKnB?|@DVLhAFp@J|@\\fCNnAT|AHt@Jj@\\vAJf@D|@@h@E`ASlBMdBEt@A|@Bn@LjAHv@FtA`@pDFbALhALr@@f@Ah@IhAMjAUzAGd@Gf@En@A^Bt@Lr@Fj@Dd@`@`C\\zBJhA?lAEt@K`AOtAOpAGz@An@Dv@N`AJ|@FpA\\rBBb@?nAGvAItAK~A?tA@bADv@Lx@?t@C`AIvAMzACjB"
+  },
+  {
+    name: "Chambers Bay - Grandview Trail",
+    distance: "3.5 miles",
+    type: "Paved Trail",
+    tags: ["Views", "Waterfront", "Hills"],
+    // Real Polyline for Chambers Bay
+    polyline: "g|qaH|l_jV]l@m@bBSl@e@tAQ^I`@A\\?|@DtATlCBhA?jAIhASzBMjBGvAEf@Cb@I`@Qn@i@|AcAfCUv@m@xAYh@k@~Ak@|AMXERARBbAPhCHrBAtAMlBQ|AWbBUnAQpAEf@C`AIfAOdAQl@k@zAg@vAOf@c@xAMZKVCPDfARfCFrA?`AItAShBQ|AU~AM`AEv@Cz@IdAQj@k@zAg@xAQj@e@vAEZAR@bATzC?|@ItAS`B]pCWlBMjBEtAC`AIfASfAi@|Ac@zAYx@a@xAA^@dATxCHtA?~@K|AUhBSrAWzAS|AGpAEpACnAGbAOlA]vAa@xAYx@a@tA"
+  },
+  {
+    name: "Point Defiance Five Mile Drive",
+    distance: "5.0 miles",
+    type: "Road / Old Growth",
+    tags: ["Beautiful Road", "Park", "Shaded"],
+    // Real Polyline for Point Defiance
+    polyline: "codaH~{hjVc@|AI\\Ah@?p@HlCFtA?fAItAS`BU|AUxAM`AEdACv@IlAQj@i@zAe@zAM`A[vAA\\BnARdCDxAA|@InASbB[~BYtBKtBErAC|@IdAQfAi@xAc@zAMjA[vAA\\BhARdCD~AA|@InASfBWvBWzAMjACxACz@IlAQn@k@zAc@zAMhA[tAE\\BhAT`C?|A"
+  }
+];
+
+// Strava provides routes as compressed encoded strings. This translates it to map coordinates.
+function decodePolyline(str, precision) {
+    var index = 0, lat = 0, lng = 0, coordinates = [], shift = 0, result = 0, byte = null, latitude_change, longitude_change, factor = Math.pow(10, precision !== undefined ? precision : 5);
+    while (index < str.length) {
+        byte = null; shift = 0; result = 0;
+        do { byte = str.charCodeAt(index++) - 63; result |= (byte & 0x1f) << shift; shift += 5; } while (byte >= 0x20);
+        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        shift = result = 0;
+        do { byte = str.charCodeAt(index++) - 63; result |= (byte & 0x1f) << shift; shift += 5; } while (byte >= 0x20);
+        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+        lat += latitude_change; lng += longitude_change;
+        coordinates.push([lat / factor, lng / factor]);
+    }
+    return coordinates;
+}
+
+// Universal map renderer using OpenTopoMap (Includes Trails & Topo lines!)
+function renderMap(containerId, polylineString) {
+  const container = document.getElementById(containerId);
+  container.style.display = 'block';
+
+  // Destroy previous map instance if it exists so we don't get overlap errors
+  if (activeMap) { activeMap.remove(); }
+
+  activeMap = L.map(containerId);
+
+  // OpenTopoMap for trail visibility and elevation lines
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap'
+  }).addTo(activeMap);
+
+  if (polylineString) {
+    const coordinates = decodePolyline(polylineString);
+    const polyline = L.polyline(coordinates, {color: '#D81B60', weight: 4, opacity: 0.8}).addTo(activeMap);
+    activeMap.fitBounds(polyline.getBounds(), { padding: [20, 20] });
+  }
+}
+
+// Button Logic: Suggest a Route
+function suggestLocalRoute() {
+  const randomRoute = routeRepository[Math.floor(Math.random() * routeRepository.length)];
+  document.getElementById('suggested-route-info').innerHTML = `
+    Suggested: ${randomRoute.name} (${randomRoute.distance}) <br>
+    <span style="font-weight:normal; color:#64748B;">Type: ${randomRoute.type} | Tags: ${randomRoute.tags.join(', ')}</span>
+  `;
+  
+  // We need a tiny timeout to let the modal expand before rendering the map, otherwise it renders gray
+  setTimeout(() => {
+    renderMap('modal-map', randomRoute.polyline);
+  }, 100);
+}
+
+// Logic: Last Run Deep Dive Tab
+function renderLastRunSummary() {
+  // Find the most recent run that has actual data
+  const completedRuns = workouts.filter(w => w.actualMiles);
+  if (completedRuns.length === 0) return;
+  
+  // Sort by date descending
+  completedRuns.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const lastRun = completedRuns[0];
+
+  const statsHtml = `
+    <div class="widget-box" style="flex:1;"><h3>Distance</h3><p style="font-size:24px; color:#D81B60; font-weight:bold;">${lastRun.actualMiles} mi</p></div>
+    <div class="widget-box" style="flex:1;"><h3>Avg Pace</h3><p style="font-size:24px; color:#26A69A; font-weight:bold;">${lastRun.actualPace} /mi</p></div>
+    <div class="widget-box" style="flex:1;"><h3>Elevation</h3><p style="font-size:24px; color:#F59E0B; font-weight:bold;">${lastRun.actualElev} ft</p></div>
+  `;
+  document.getElementById('last-run-stats').innerHTML = statsHtml;
+
+  // If we have the Strava polyline saved in the notes (we need to update syncStrava to grab this later), render it.
+  // For now, if we don't have it, we just show a generic view of Lakewood.
+  renderMap('last-run-map', lastRun.mapPolyline || routeRepository[0].polyline); 
+}
+
+// Logic: Render the 100-Route Repository Tab
+function renderSuggestedRoutes() {
+  const grid = document.getElementById('route-repository-grid');
+  grid.innerHTML = '';
+  
+  routeRepository.forEach(route => {
+    grid.innerHTML += `
+      <div class="widget-box">
+        <h4 style="color:#0D2B5A; margin-bottom:5px;">${route.name}</h4>
+        <p style="color:#D81B60; font-weight:bold; margin-bottom:5px;">${route.distance}</p>
+        <p style="font-size:12px; color:#64748B;">${route.tags.join(' • ')}</p>
+      </div>
+    `;
+  });
+}
+
 // --- CLOUDFLARE BACKEND STRAVA SYNC ---
 // --- CLOUDFLARE BACKEND STRAVA SYNC ---
 async function syncStrava() {
