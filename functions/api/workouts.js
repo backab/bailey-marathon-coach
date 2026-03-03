@@ -33,3 +33,25 @@ export async function onRequestGet(context) {
     });
   }
 }
+
+// --- NEW: Handle incoming data from the website and save it to the database ---
+export async function onRequestPost(context) {
+  try {
+    // 1. Read the JSON data sent from your frontend website
+    const data = await context.request.json();
+    
+    // 2. Save it directly into your Cloudflare KV Database
+    await context.env.COACH_DB.put('baileyCoachData_v2', JSON.stringify(data));
+    
+    // 3. Send a thumbs up back to the website
+    return new Response(JSON.stringify({ success: true, message: "Data securely saved to cloud" }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Failed to save data to cloud" }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
