@@ -529,6 +529,8 @@ function generatePlan() {
 
 // Global variable to hold our active map instance
 let activeMap = null;
+let paceChartInstance = null;
+let elevChartInstance = null;
 
 // The Local Route Database
 const routeRepository = [
@@ -693,14 +695,13 @@ function goToDeepDive() {
 }
 
 // Upgraded Deep Dive Logic (Accepts specific dates)
+// Upgraded Deep Dive Logic
 function renderDeepDive(targetDate = null) {
   let targetWorkout = null;
 
   if (targetDate) {
-    // If a date was clicked from the calendar, find that specific run
     targetWorkout = workouts.find(w => w.date === targetDate);
   } else {
-    // Fallback: If clicking the sidebar tab directly, just show the most recent completed run
     const completedRuns = workouts.filter(w => w.actualMiles);
     if (completedRuns.length > 0) {
       completedRuns.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -708,24 +709,94 @@ function renderDeepDive(targetDate = null) {
     }
   }
 
-  // Handle empty days
   if (!targetWorkout || !targetWorkout.actualMiles) {
-    document.getElementById('last-run-stats').innerHTML = `<p style="color:#64748B; font-style: italic;">No GPS data recorded for this selection yet.</p>`;
+    document.getElementById('deep-dive-stats').innerHTML = `<p style="color:#64748B; grid-column: 1 / -1;">No GPS data recorded for this selection.</p>`;
     document.getElementById('last-run-map').style.display = 'none';
     return;
   }
 
-  // Render the specific day's data
+  // Render the Map
   document.getElementById('last-run-map').style.display = 'block';
-  const statsHtml = `
-    <div class="widget-box" style="flex:1;"><h3>Distance</h3><p style="font-size:24px; color:#D81B60; font-weight:bold;">${targetWorkout.actualMiles} mi</p></div>
-    <div class="widget-box" style="flex:1;"><h3>Avg Pace</h3><p style="font-size:24px; color:#26A69A; font-weight:bold;">${targetWorkout.actualPace} /mi</p></div>
-    <div class="widget-box" style="flex:1;"><h3>Elevation</h3><p style="font-size:24px; color:#F59E0B; font-weight:bold;">${targetWorkout.actualElev} ft</p></div>
-  `;
-  document.getElementById('last-run-stats').innerHTML = statsHtml;
-
-  // Use the actual Strava polyline for that day if it exists, otherwise show a generic route
   renderMap('last-run-map', targetWorkout.mapPolyline || routeRepository[0].polyline); 
+
+  // Render the 4 Core Stats (Using placeholder GAP and Variance for now)
+  const statsHtml = `
+    <div class="widget-box">
+      <h3 style="font-size: 12px; color: #64748B;">Distance</h3>
+      <p style="font-size:20px; color:#D81B60; font-weight:bold;">${targetWorkout.actualMiles} <span style="font-size:12px;">mi</span></p>
+    </div>
+    <div class="widget-box">
+      <h3 style="font-size: 12px; color: #64748B;">Avg Pace</h3>
+      <p style="font-size:20px; color:#26A69A; font-weight:bold;">${targetWorkout.actualPace}</p>
+    </div>
+    <div class="widget-box">
+      <h3 style="font-size: 12px; color: #64748B;">GAP</h3>
+      <p style="font-size:20px; color:#8B5CF6; font-weight:bold;">7:15 <span style="font-size:12px;">/mi</span></p>
+    </div>
+    <div class="widget-box">
+      <h3 style="font-size: 12px; color: #64748B;">Pace Variance</h3>
+      <p style="font-size:20px; color:#F59E0B; font-weight:bold;">12 <span style="font-size:12px;">sec</span></p>
+    </div>
+  `;
+  document.getElementById('deep-dive-stats').innerHTML = statsHtml;
+
+  // Render the Visual Charts
+  renderCharts();
+}
+
+// Function to draw the Chart.js visual graphs
+function renderCharts() {
+  // Destroy old charts if they exist so they don't overlap
+  if (paceChartInstance) paceChartInstance.destroy();
+  if (elevChartInstance) elevChartInstance.destroy();
+
+  // MOCK DATA: We will replace this with real Strava arrays later
+  const miles = ['1', '2', '3', '4', '5'];
+  const paces = [7.5, 7.3, 7.2, 7.1, 6.9]; // represented in minutes-decimal for graphing
+  const elevation = [100, 150, 120, 180, 200];
+
+  // 1. Pace Chart (Bar)
+  const paceCtx = document.getElementById('paceChart').getContext('2d');
+  paceChartInstance = new Chart(paceCtx, {
+    type: 'bar',
+    data: {
+      labels: miles,
+      datasets: [{
+        label: 'Pace (min/mi)',
+        data: paces,
+        backgroundColor: '#26A69A',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { reverse: true, min: 6.0, max: 8.5 } // Faster paces (lower numbers) go at the top!
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // 2. Elevation Profile (Line/Area)
+  const elevCtx = document.getElementById('elevationChart').getContext('2d');
+  elevChartInstance = new Chart(elevCtx, {
+    type: 'line',
+    data: {
+      labels: miles,
+      datasets: [{
+        label: 'Elevation (ft)',
+        data: elevation,
+        borderColor: '#8B5CF6',
+        backgroundColor: 'rgba(139, 92, 246, 0.2)', // Light purple fill
+        fill: true,
+        tension: 0.4 // Smooths out the mountain peaks
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } }
+    }
+  });
 }
 
 
