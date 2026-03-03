@@ -741,28 +741,57 @@ function renderDeepDive(targetDate = null) {
   document.getElementById('deep-dive-stats').innerHTML = statsHtml;
 
   // Render the Visual Charts
-  renderCharts();
+  renderCharts(targetWorkout);
 }
 
 // Function to draw the Chart.js visual graphs
-function renderCharts() {
-  // Destroy old charts if they exist so they don't overlap
+// Function to draw the Chart.js visual graphs
+function renderCharts(workout) {
   if (paceChartInstance) paceChartInstance.destroy();
   if (elevChartInstance) elevChartInstance.destroy();
 
-  // MOCK DATA: We will replace this with real Strava arrays later
-  const miles = ['1', '2', '3', '4', '5'];
-  const paces = [7.5, 7.3, 7.2, 7.1, 6.9]; // represented in minutes-decimal for graphing
-  const elevation = [100, 150, 120, 180, 200];
+  // 1. DYNAMIC SCALING: Figure out how many miles to draw
+  const totalMiles = Math.ceil(parseFloat(workout.actualMiles) || 5);
+  const miles = [];
+  const paces = [];
+  const elevation = [];
 
-  // 1. Pace Chart (Bar)
+  // Convert the run's average pace (e.g., "7:30") to a decimal (7.5) to act as our baseline
+  let baselinePace = 7.5; 
+  if (workout.actualPace) {
+      const parts = workout.actualPace.split(':');
+      if (parts.length === 2) {
+          baselinePace = parseInt(parts[0]) + (parseInt(parts[1]) / 60);
+      }
+  }
+
+  // Generate mock data for the exact number of miles ran
+  let currentElev = 100;
+  for (let i = 1; i <= totalMiles; i++) {
+      miles.push(`Mile ${i}`);
+      // Add a slight random variance (+/- 18 seconds) to the average pace for visual effect
+      paces.push(baselinePace + (Math.random() * 0.6 - 0.3));
+      
+      // Build a rolling elevation profile
+      currentElev += (Math.random() * 40 - 15);
+      elevation.push(Math.round(currentElev));
+  }
+
+  // 2. THE TIME TRANSLATOR: Converts decimal (7.5) back to clock time (7:30)
+  const formatTime = (decimalMinutes) => {
+      const mins = Math.floor(decimalMinutes);
+      const secs = Math.round((decimalMinutes - mins) * 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // 3. Pace Chart (Bar)
   const paceCtx = document.getElementById('paceChart').getContext('2d');
   paceChartInstance = new Chart(paceCtx, {
     type: 'bar',
     data: {
       labels: miles,
       datasets: [{
-        label: 'Pace (min/mi)',
+        label: 'Pace',
         data: paces,
         backgroundColor: '#26A69A',
         borderRadius: 4
@@ -771,13 +800,27 @@ function renderCharts() {
     options: {
       responsive: true,
       scales: {
-        y: { reverse: true, min: 6.0, max: 8.5 } // Faster paces (lower numbers) go at the top!
+        y: { 
+            reverse: true, // Visually puts faster paces at the top!
+            ticks: {
+                // This intercepts the Y-axis numbers and formats them as time
+                callback: function(value) { return formatTime(value); }
+            }
+        }
       },
-      plugins: { legend: { display: false } }
+      plugins: { 
+          legend: { display: false },
+          tooltip: {
+              callbacks: {
+                  // This makes the hover popup show real time instead of decimals
+                  label: function(context) { return formatTime(context.parsed.y) + ' /mi'; }
+              }
+          }
+      }
     }
   });
 
-  // 2. Elevation Profile (Line/Area)
+  // 4. Elevation Profile (Line/Area)
   const elevCtx = document.getElementById('elevationChart').getContext('2d');
   elevChartInstance = new Chart(elevCtx, {
     type: 'line',
