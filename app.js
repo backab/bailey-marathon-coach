@@ -420,6 +420,27 @@ function calculateGAP() {
 
 function closeModal() { document.getElementById('workoutModal').style.display = 'none'; selectedWorkoutId = null; }
 
+// Pushes the local 'workouts' array straight into the Cloudflare backend
+async function saveToCloud() {
+  try {
+    const response = await fetch('/api/workouts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(workouts) // Sends your entire running history
+    });
+
+    if (response.ok) {
+      console.log("Successfully synced with Cloudflare KV!");
+    } else {
+      console.error("Failed to save to cloud.");
+    }
+  } catch (error) {
+    console.error("Network error saving to cloud:", error);
+  }
+}
+
 function saveWorkout() {
   if(!selectedWorkoutId) return;
   const w = workouts.find(wo => wo.id === selectedWorkoutId);
