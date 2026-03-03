@@ -960,4 +960,5 @@ async function syncStrava() {
     console.error(error);
     alert("Strava Sync Failed. Check the console.");
   }
+saveToCloud();
 }
