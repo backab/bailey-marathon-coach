@@ -200,3 +200,9 @@ max-height: 85vh; /* Prevents it from being taller than 85% of the screen */
   max-height: 85vh !important; /* Forces the modal to never be taller than 85% of your screen */
   overflow-y: auto !important; /* Forces a vertical scrollbar to appear if content overflows */
 }
+/* --- OVERRIDE: MOBILE RESPONSIVENESS FOR DEEP DIVE STATS --- */
+@media (max-width: 768px) {
+  #deep-dive-stats {
+    grid-template-columns: 1fr 1fr !important; /* Forces a 2x2 grid on phones */
+  }
+}
