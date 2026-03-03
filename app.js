@@ -393,6 +393,7 @@ function openModal(id) {
   document.getElementById('actualMiles').addEventListener('input', calculateGAP);
 
   document.getElementById('workoutModal').style.display = 'flex';
+  updateModalUI(selectedWorkoutId);
 }
 
 function calculateGAP() {
@@ -637,25 +638,57 @@ function suggestLocalRoute() {
   }, 100);
 }
 
+// Makes the Modal "Smart" based on if the run is in the past or future
+function updateModalUI(workoutId) {
+   const workout = workouts.find(w => String(w.id) === String(workoutId));
+   if (!workout) return;
+
+   // Grab the UI elements
+   const suggestBtn = document.querySelector('button[onclick="suggestLocalRoute()"]');
+   const suggestInfo = document.getElementById('suggested-route-info');
+   const mapContainer = document.getElementById('modal-map');
+
+   if (workout.actualMiles) {
+       // SCENARIO A: It's a completed past run!
+       if (suggestBtn) suggestBtn.style.display = 'none'; // Hide suggestion button
+       if (suggestInfo) suggestInfo.style.display = 'none'; // Hide suggestion text
+
+       // Show the actual map container
+       mapContainer.style.display = 'block';
+       
+       // Render the real Strava map (with a tiny delay to let the modal open)
+       setTimeout(() => {
+           renderMap('modal-map', workout.mapPolyline || routeRepository[0].polyline);
+       }, 100);
+
+   } else {
+       // SCENARIO B: It's an upcoming future run!
+       if (suggestBtn) suggestBtn.style.display = 'block'; // Show suggestion button
+       if (suggestInfo) {
+          suggestInfo.style.display = 'block';
+          suggestInfo.innerHTML = ''; // Clear out old suggestions
+       }
+       mapContainer.style.display = 'none'; // Hide the map until they click suggest
+   }
+}
+
 // Logic: Last Run Deep Dive Tab
 // Navigates from the modal directly to the specific day's deep dive
-// Navigates from the modal directly to the specific day's deep dive
 function goToDeepDive() {
-  // Create a custom flag so switchTab knows we are coming from the modal
   const customEvent = new Event('click');
   customEvent.isFromModal = true;
 
-  // Grab the exact workout using the secret ID we just found!
-  const currentWorkout = workouts.find(wo => wo.id === selectedWorkoutId);
+  // THE FIX: Forcing both IDs to be strings so they match perfectly
+  const currentWorkout = workouts.find(wo => String(wo.id) === String(selectedWorkoutId));
 
   closeModal(); 
   switchTab(customEvent, 'lastrun-view'); 
   
-  // Pass the exact date to the deep dive renderer
   if (currentWorkout && currentWorkout.date) {
     renderDeepDive(currentWorkout.date);
   } else {
-    renderDeepDive(); // Fallback just in case
+    console.error("Could not find workout. Defaulting to latest run.");
+    renderDeepDive(); 
   }
 }
 
