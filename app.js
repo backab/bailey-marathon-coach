@@ -785,6 +785,16 @@ function renderCharts(workout) {
   };
 
   // 3. Pace Chart (Bar)
+ // --- NEW: DYNAMIC ZOOM MATH ---
+  // Find the fastest and slowest miles in this specific run
+  const minPace = Math.min(...paces);
+  const maxPace = Math.max(...paces);
+  
+  // Add a 20-second visual buffer to the top and bottom so bars don't hit the ceiling
+  const chartMin = minPace - 0.35; 
+  const chartMax = maxPace + 0.35;
+
+  // 3. Pace Chart (Bar) - Upgraded Direction & Zoom
   const paceCtx = document.getElementById('paceChart').getContext('2d');
   paceChartInstance = new Chart(paceCtx, {
     type: 'bar',
@@ -801,9 +811,10 @@ function renderCharts(workout) {
       responsive: true,
       scales: {
         y: { 
-            reverse: true, // Visually puts faster paces at the top!
+            // We removed "reverse: true" so it grows bottom-up
+            min: chartMin, // Dynamically zooms in on the fastest pace
+            max: chartMax, // Dynamically zooms in on the slowest pace
             ticks: {
-                // This intercepts the Y-axis numbers and formats them as time
                 callback: function(value) { return formatTime(value); }
             }
         }
@@ -812,7 +823,6 @@ function renderCharts(workout) {
           legend: { display: false },
           tooltip: {
               callbacks: {
-                  // This makes the hover popup show real time instead of decimals
                   label: function(context) { return formatTime(context.parsed.y) + ' /mi'; }
               }
           }
