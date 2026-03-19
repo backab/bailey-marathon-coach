@@ -14,7 +14,7 @@ export async function onRequestPost(context) {
 
    // ... (Keep Steps 1, 2, and 3 exactly the same) ...
 
-    // 4. Send the prompt, the data, and the question directly to Claude
+// 4. Send the prompt, the data, and the question directly to Claude
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -34,13 +34,37 @@ export async function onRequestPost(context) {
 
     const claudeData = await claudeResponse.json();
 
+    // 🛑 INDESTRUCTIBLE DEBUGGER: Catch any weird API rejections
+    if (claudeData.type === 'error' || claudeData.error) {
+       throw new Error(`Claude API blocked it: ${JSON.stringify(claudeData.error || claudeData)}`);
+    }
+    if (!claudeData.content || !claudeData.content) {
+       throw new Error(`CLAUDE DEBUG (Unexpected Format): ${JSON.stringify(claudeData)}`);
+    }
+
+    // 5. Safely return Claude's answer back to your website
+    const aiReply = claudeData.content.text;
+
+    return new Response(JSON.stringify({ reply: aiReply }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    // This will print Claude's exact complaint to your browser console
+    return new Response(JSON.stringify({ error: error.message || error.toString() }), { status: 500 });
+  }
+}
+
+    const claudeData = await claudeResponse.json();
+
     // NEW CATCH: If Claude sends an error instead of a response, print it!
     if (claudeData.error) {
        throw new Error(`Claude API blocked it: ${claudeData.error.message}`);
     }
 
-    // 5. Return Claude's answer back to your website
-    const aiReply = claudeData.content.text;
+   // 5. Return Claude's answer back to your website
+const aiReply = claudeData.content.text;
 
     return new Response(JSON.stringify({ reply: aiReply }), { 
       status: 200,
