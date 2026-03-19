@@ -962,3 +962,29 @@ async function syncStrava() {
   }
 saveToCloud();
 }
+
+// Function to talk to your new Claude backend
+async function askCoach(userMessage) {
+  console.log("Asking Coach: ", userMessage);
+  
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userMessage })
+    });
+
+    const data = await response.json();
+    
+    if (data.reply) {
+      console.log("Coach says: ", data.reply);
+      // Here is where you would update your HTML to show the message!
+      // Example: document.getElementById('chat-box').innerHTML += `<p>${data.reply}</p>`;
+      return data.reply;
+    } else {
+      console.error("Error from AI:", data.error);
+    }
+  } catch (error) {
+    console.error("Network error asking coach:", error);
+  }
+}
