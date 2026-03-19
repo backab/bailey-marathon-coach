@@ -39,7 +39,8 @@ export async function onRequestPost(context) {
       headers: { 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
-    return new Response(JSON.stringify({ error: "Coach is currently offline." }), { status: 500 });
+ } catch (error) {
+    // This will send the EXACT technical reason it crashed back to your browser console
+    return new Response(JSON.stringify({ error: error.message || error.toString() }), { status: 500 });
   }
 }
