@@ -988,3 +988,49 @@ async function askCoach(userMessage) {
     console.error("Network error asking coach:", error);
   }
 }
+
+// --- UI Chat Logic ---
+
+// Listen for clicks on the Send button, or hitting "Enter" on the keyboard
+document.getElementById('send-btn').addEventListener('click', handleChatSubmit);
+document.getElementById('chat-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') handleChatSubmit();
+});
+
+async function handleChatSubmit() {
+  const inputField = document.getElementById('chat-input');
+  const message = inputField.value.trim();
+  
+  if (!message) return; // Ignore empty clicks
+
+  // 1. Post your message to the UI instantly
+  appendMessage(message, 'user-message');
+  inputField.value = ''; // Clear the box
+
+  // 2. Post a temporary "Thinking..." message for Claude
+  const loadingId = appendMessage("Analyzing data...", 'bot-message');
+
+  // 3. Send the message to your Cloudflare/Claude backend
+  const reply = await askCoach(message); 
+
+  // 4. Overwrite the "Thinking..." message with Claude's actual answer
+  document.getElementById(loadingId).innerText = reply || "Connection error. Coach is offline.";
+}
+
+// Helper function to build the chat bubbles and auto-scroll to the bottom
+function appendMessage(text, className) {
+  const chatHistory = document.getElementById('chat-history');
+  const msgDiv = document.createElement('div');
+  
+  msgDiv.className = `message ${className}`;
+  msgDiv.innerText = text;
+  
+  // Give it a unique ID so we can find it and update it later
+  const uniqueId = 'msg-' + Date.now();
+  msgDiv.id = uniqueId;
+  
+  chatHistory.appendChild(msgDiv);
+  chatHistory.scrollTop = chatHistory.scrollHeight; // Always scroll to newest message
+  
+  return uniqueId;
+}
