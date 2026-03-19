@@ -12,6 +12,8 @@ export async function onRequestPost(context) {
     completedRuns.sort((a, b) => new Date(b.date) - new Date(a.date));
     const recentRuns = completedRuns.slice(0, 30);
 
+   // ... (Keep Steps 1, 2, and 3 exactly the same) ...
+
     // 4. Send the prompt, the data, and the question directly to Claude
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -21,7 +23,7 @@ export async function onRequestPost(context) {
         'content-type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307', // Haiku is incredibly fast, or use sonnet-20240229
+        model: 'claude-3-haiku-20240307', 
         max_tokens: 500,
         system: `You are Bailey's elite Sub-3 marathon coach. Be direct, analytical, and highly encouraging. Use this JSON database of Bailey's recent runs to answer questions: ${JSON.stringify(recentRuns)}`,
         messages: [
@@ -30,8 +32,14 @@ export async function onRequestPost(context) {
       })
     });
 
-    // 5. Return Claude's answer back to your website
     const claudeData = await claudeResponse.json();
+
+    // NEW CATCH: If Claude sends an error instead of a response, print it!
+    if (claudeData.error) {
+       throw new Error(`Claude API blocked it: ${claudeData.error.message}`);
+    }
+
+    // 5. Return Claude's answer back to your website
     const aiReply = claudeData.content.text;
 
     return new Response(JSON.stringify({ reply: aiReply }), { 
@@ -39,8 +47,8 @@ export async function onRequestPost(context) {
       headers: { 'Content-Type': 'application/json' }
     });
 
- } catch (error) {
-    // This will send the EXACT technical reason it crashed back to your browser console
+  } catch (error) {
+    // This will now print Claude's exact complaint to your browser console
     return new Response(JSON.stringify({ error: error.message || error.toString() }), { status: 500 });
   }
 }
