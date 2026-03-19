@@ -12,16 +12,15 @@ export async function onRequestPost(context) {
     completedRuns.sort((a, b) => new Date(b.date) - new Date(a.date));
     const recentRuns = completedRuns.slice(0, 30);
 
-  // 4. Send the prompt to your Company's Internal Bedrock Gateway
+    // 4. Send the prompt to your Company's Internal Bedrock Gateway
     const claudeResponse = await fetch('https://ai-gateway.zende.sk/bedrock/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke', {
       method: 'POST',
       headers: {
-        // Internal gateways typically use standard Bearer authorization
         'Authorization': `Bearer ${context.env.CLAUDE_API_KEY}`, 
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31', // Bedrock requires this here, not in the headers
+        anthropic_version: 'bedrock-2023-05-31', 
         max_tokens: 500,
         system: `You are Bailey's elite Sub-3 marathon coach. Be direct, analytical, and highly encouraging. Use this JSON database of Bailey's recent runs to answer questions: ${JSON.stringify(recentRuns)}`,
         messages: [
@@ -29,7 +28,18 @@ export async function onRequestPost(context) {
         ]
       })
     });
-    
+
+    // THIS IS THE LINE THAT WENT MISSING!
+    const claudeData = await claudeResponse.json();
+
+    // 🛑 INDESTRUCTIBLE DEBUGGER: Catch any weird API rejections
+    if (claudeData.type === 'error' || claudeData.error) {
+       throw new Error(`AWS Gateway blocked it: ${JSON.stringify(claudeData.error || claudeData)}`);
+    }
+    if (!claudeData.content || !claudeData.content) {
+       throw new Error(`CLAUDE DEBUG (Unexpected Format): ${JSON.stringify(claudeData)}`);
+    }
+
     // 5. Safely return Claude's answer back to your website
     const aiReply = claudeData.content.text;
 
@@ -39,7 +49,6 @@ export async function onRequestPost(context) {
     });
 
   } catch (error) {
-    // This will print Claude's exact complaint to your browser console
     return new Response(JSON.stringify({ error: error.message || error.toString() }), { status: 500 });
   }
 }
