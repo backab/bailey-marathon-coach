@@ -135,8 +135,8 @@ async function fetchWeather() {
     });
 
     data.hourly.time.forEach((timeStr, index) => {
-      const datePart = timeStr.split('T')[0];
-      const hourPart = timeStr.split('T')[1];
+      const datePart = timeStr.split('T');
+      const hourPart = timeStr.split('T');
       if (!weatherData.hourly[datePart]) weatherData.hourly[datePart] = [];
       weatherData.hourly[datePart].push({
         time: hourPart, temp: Math.round((data.hourly.temperature_2m[index] * 9/5) + 32), precip: data.hourly.precipitation_probability[index]
@@ -173,7 +173,7 @@ function findBestTime() {
   }
 
   if (bestHour) {
-    let hourInt = parseInt(bestHour.time.split(':')[0]);
+    let hourInt = parseInt(bestHour.time.split(':'));
     let ampm = hourInt >= 12 ? 'PM' : 'AM';
     let displayHour = hourInt % 12 || 12;
     resultBox.innerHTML = `
@@ -403,7 +403,7 @@ function calculateGAP() {
 
   if (miles > 0 && paceStr && elevFt > 0 && paceStr.includes(':')) {
     const parts = paceStr.split(':');
-    const rawSeconds = (parseInt(parts[0]) * 60) + parseInt(parts[1]);
+    const rawSeconds = (parseInt(parts) * 60) + parseInt(parts);
     const elevPerMile = elevFt / miles;
     const gapAdjustmentSeconds = (elevPerMile / 100) * 15;
     
@@ -616,7 +616,7 @@ function renderMap(containerId, polylineString) {
   if (polylineString) {
     const coordinates = decodePolyline(polylineString);
     const polyline = L.polyline(coordinates, {color: '#D81B60', weight: 4, opacity: 0.8}).addTo(activeMap);
-    activeMap.fitBounds(polyline.getBounds(), { padding: [20, 20] });
+    activeMap.fitBounds(polyline.getBounds(), { padding: });
   }
 }
 
@@ -628,9 +628,9 @@ function suggestLocalRoute() {
   
   // This clever regex pulls just the numbers out of the string (e.g., "Planned: 5.0 miles" -> 5.0)
   const distanceMatch = plannedText.match(/[\d\.]+/);
-  const targetDistance = distanceMatch ? parseFloat(distanceMatch[0]) : 0;
+  const targetDistance = distanceMatch ? parseFloat(distanceMatch) : 0;
 
-  let bestRoute = routeRepository[0];
+  let bestRoute = routeRepository;
 
   // 2. Find the route in the repository with the closest matching distance
   if (targetDistance > 0) {
@@ -681,7 +681,7 @@ function updateModalUI(workoutId) {
        
        // Render the real Strava map (with a tiny delay to let the modal open)
        setTimeout(() => {
-           renderMap('modal-map', workout.mapPolyline || routeRepository[0].polyline);
+           renderMap('modal-map', workout.mapPolyline || routeRepository.polyline);
        }, 100);
 
    } else {
@@ -726,7 +726,7 @@ function renderDeepDive(targetDate = null) {
     const completedRuns = workouts.filter(w => w.actualMiles);
     if (completedRuns.length > 0) {
       completedRuns.sort((a, b) => new Date(b.date) - new Date(a.date));
-      targetWorkout = completedRuns[0];
+      targetWorkout = completedRuns;
     }
   }
 
@@ -738,7 +738,7 @@ function renderDeepDive(targetDate = null) {
 
   // Render the Map
   document.getElementById('last-run-map').style.display = 'block';
-  renderMap('last-run-map', targetWorkout.mapPolyline || routeRepository[0].polyline); 
+  renderMap('last-run-map', targetWorkout.mapPolyline || routeRepository.polyline); 
 
   // Render the 4 Core Stats (Using placeholder GAP and Variance for now)
   const statsHtml = `
@@ -782,7 +782,7 @@ function renderCharts(workout) {
   if (workout.actualPace) {
       const parts = workout.actualPace.split(':');
       if (parts.length === 2) {
-          baselinePace = parseInt(parts[0]) + (parseInt(parts[1]) / 60);
+          baselinePace = parseInt(parts) + (parseInt(parts) / 60);
       }
   }
 
@@ -924,7 +924,7 @@ async function syncStrava() {
         const paceSecs = Math.floor((minsPerMileDecimal - paceMins) * 60).toString().padStart(2, '0');
         const paceString = `${paceMins}:${paceSecs}`;
         
-        const runDate = activity.start_date_local.split('T')[0];
+        const runDate = activity.start_date_local.split('T');
         const workoutToUpdate = workouts.find(w => w.date === runDate);
         
         if (workoutToUpdate && !workoutToUpdate.actualMiles) {
@@ -960,7 +960,9 @@ async function syncStrava() {
     console.error(error);
     alert("Strava Sync Failed. Check the console.");
   }
-saveToCloud();
+  
+  // Placed correctly so it triggers whether data is new or old
+  saveToCloud();
 }
 
 // Function to talk to your new Claude backend
