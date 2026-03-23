@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">   
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bailey Marathon Coach</title>
   
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -88,14 +87,14 @@
         </div>
       </div>
     </div>
+
     <div id="routes-view" class="tab-content" style="display: none;">
       <h3 style="color: #0D2B5A; margin-bottom: 20px;">Lakewood / Tacoma Route Repository</h3>
       <div id="route-repository-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        </div>
+      </div>
     </div>
 
     <div id="lastrun-view" class="tab-content" style="display: none;">
-      
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3 style="color: #0D2B5A; margin: 0;">Run Analysis</h3>
         <span id="deep-dive-weather" style="background: #E0F2FE; color: #0284C7; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold;">🌤️ 62°F | 55% Hum</span>
@@ -167,7 +166,8 @@
          <button onclick="findBestTime()" style="background: #0284C7; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%;">⛅ Find Best Time to Run</button>
          <div id="best-time-result" style="font-size: 12px; color: #0D2B5A; margin-top: 8px; font-weight: 600; text-align: center;"></div>
       </div>
-<div style="margin-bottom: 15px; display: flex; gap: 10px;">
+
+      <div style="margin-bottom: 15px; display: flex; gap: 10px;">
          <button onclick="suggestLocalRoute()" style="background: #10B981; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%;">🗺️ Suggest Local Route</button>
       </div>
       <div id="suggested-route-info" style="font-size: 13px; color: #0D2B5A; font-weight: bold; margin-bottom: 10px;"></div>
@@ -196,15 +196,11 @@
       
       <label for="actualNotes">Workout Notes (Diary):</label>
       <textarea id="actualNotes" rows="3" placeholder="How did your joints feel? Weather? Nutrition?"></textarea>
-      <div style="margin-top: 20px; display: flex; gap: 10px;">
-        <button onclick="saveWorkout()" class="save-btn">Save</button>
-        <button onclick="closeModal()" class="cancel-btn">Cancel</button>
-        
-        <button onclick="goToDeepDive()" class="action-btn" style="background: #8B5CF6; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">🔍 Deep Dive This Run</button>
-      </div>
-      <div style="margin-top: 20px; display: flex; gap: 10px;">
-    
-        <button onclick="closeModal()" class="cancel-btn">Cancel</button>
+      
+      <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button onclick="saveWorkout()" class="save-btn" style="flex: 1;">Save</button>
+        <button onclick="closeModal()" class="cancel-btn" style="flex: 1;">Cancel</button>
+        <button onclick="goToDeepDive()" class="action-btn" style="background: #8B5CF6; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;">🔍 Deep Dive This Run</button>
       </div>
     </div>
   </div>
